@@ -1,23 +1,48 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
 import java.lang.System;
 import javax.swing.*;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.List;
+import java.util.Collections;
+import java.util.ArrayList;
 
+
+
+/**
+ * @author Darius
+ */
 public class Quiz implements ActionListener {
 
   String[] questions = {
-    "Pentru ce materie este relizat acest proiect?",
-    "Ce nota o sa am la aceasta materie?",
-    "In ce an suntem?",
+    "Care este cea mai mare planeta din sistemul solar?",
+    "Cate continente exista pe Pamant?",
+    "In ce an s-a sfarsit Al Doilea Razboi Mondial?",
     "In ce anotimp incepe sa ninga?",
+    "Ce planeta este cunoscuta ca \"Planeta Rosie\"?",
+    "Care este cel mai lung râu din lume?",
+    "Care este capitala Frantei?",
+    "Câte elemente sunt în tabelul periodic?",
+    "Care este cel mai mare ocean din lume?",
+    "Care este elementul chimic cu simbolul \"O\"?",
   };
   String[][] options = {
-    { "Proiect Individual", "Programare 3", "Sport", "Baze de date" },
-    { "8", "10", "5", "4" },
-    { "2022", "2203", "2023", "2024" },
+    { "Jupiter", "Pamant", "Venus", "Marte" },
+    { "5", "7", "6", "8" },
+    { "1943", "1947", "1945", "1950" },
     { "Primavara", "Vara", "Iarna", "Toamna" },
+    { "Jupiter", "Saturn", "Venus", "Marte" },
+    { "Nil", "Amazon", "Yangtze", "Mississippi" },
+    { "Berlin", "Londra", "Madrid", "Paris" },
+    { "105", "118", "112", "300" },
+    { "Oceanul Pacific", "Oceanul Indian", "Oceanul Atlantic", "Oceanul Arctic" },
+    { "Aur", "Osmiu", "Oxigen", "Olmiu" },
   };
-  char[] answers = { 'A', 'B', 'C', 'C' };
+  char[] answers = { 'A', 'B', 'C', 'C','D','B','D','B','A','C' };
 
   char guess;
   char answer;
@@ -25,11 +50,12 @@ public class Quiz implements ActionListener {
   int correct_guesses = 0;
   int total_questions = questions.length;
   int result;
-  int seconds = 10;
+  int seconds = 15;
 
-  // initialize the start/quit buttons
+
   JButton buttonStart = new JButton();
   JButton buttonQuit = new JButton();
+  JButton buttonBack = new JButton("Back to Menu");
 
   JFrame frame = new JFrame();
   JTextField textfield = new JTextField();
@@ -60,7 +86,9 @@ public class Quiz implements ActionListener {
       }
     }
   );
-
+/**
+ * Setarea de frame uri
+ */
   public Quiz() {
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setSize(650,650);
@@ -80,12 +108,20 @@ public class Quiz implements ActionListener {
     buttonQuit.setFocusable(false);
     buttonQuit.addActionListener(this);
     buttonQuit.setText("Quit");
+    
+    buttonBack.setBounds(220, 450, 200, 100);
+    buttonBack.setFont(new Font("MV Boli", Font.BOLD, 20));
+    buttonBack.setFocusable(false);
+    buttonBack.addActionListener(this);
 
     frame.add(buttonStart);
     frame.add(buttonQuit);
     frame.setVisible(true);
   }
-
+/**
+ * Setarea tuturor frameurilor
+ */
+  
   public void playGame() {
 
      // remove start and quit buttons
@@ -170,7 +206,7 @@ public class Quiz implements ActionListener {
     time_label.setHorizontalAlignment(JTextField.CENTER);
     time_label.setText("<TIMP>");
 
-    number_right.setBounds(300, 300, 200, 100);
+    number_right.setBounds(225, 225, 200, 100);
     number_right.setBackground(new Color(25, 25, 25));
     number_right.setForeground(new Color(25, 255, 0));
     number_right.setFont(new Font("Ink Free", Font.BOLD, 50));
@@ -178,7 +214,7 @@ public class Quiz implements ActionListener {
     number_right.setHorizontalAlignment(JTextField.CENTER);
     number_right.setEditable(false);
 
-    percentage.setBounds(300, 400, 200, 100);
+    percentage.setBounds(225, 325, 200, 100);
     percentage.setBackground(new Color(25, 25, 25));
     percentage.setForeground(new Color(25, 255, 0));
     percentage.setFont(new Font("Ink Free", Font.BOLD, 50));
@@ -204,7 +240,9 @@ public class Quiz implements ActionListener {
 
     nextQuestion();
   }
-
+/**
+ * Intrebarile
+ */
   public void nextQuestion() {
     if (index >= total_questions) {
       results();
@@ -226,6 +264,9 @@ public class Quiz implements ActionListener {
       playGame();
     } else if (e.getSource() == buttonQuit) {
       System.exit(0);
+    } else if (e.getSource() == buttonBack) {
+        frame.dispose();
+        new Quiz();
     } else {
       buttonA.setEnabled(false);
       buttonB.setEnabled(false);
@@ -258,7 +299,9 @@ public class Quiz implements ActionListener {
       displayAnswer();
     }
   }
-
+/**
+ * Butoanele de raspuns
+ */
   public void displayAnswer() {
     timer.stop();
 
@@ -291,7 +334,7 @@ public class Quiz implements ActionListener {
           answer_labelD.setForeground(new Color(25, 255, 0));
 
           answer = ' ';
-          seconds = 10;
+          seconds = 15;
           seconds_left.setText(String.valueOf(seconds));
           buttonA.setEnabled(true);
           buttonB.setEnabled(true);
@@ -305,31 +348,127 @@ public class Quiz implements ActionListener {
     pause.setRepeats(false);
     pause.start();
   }
-
+/**
+ * Afisarea rezultatelor
+ */
   public void results() {
+	    result = (int) ((correct_guesses / (double) total_questions) * 100);
 
-    result = (int) ((correct_guesses / (double) total_questions) * 100);
+	    textfield.setText("RESULTS!");
+	    number_right.setText("(" + correct_guesses + "/" + total_questions + ")");
+	    percentage.setText(result + "%");
 
-    textfield.setText("RESULTS!");
+	    // Elimină componentele anterioare din frame
+	    frame.remove(textarea);
+	    frame.remove(buttonA);
+	    frame.remove(buttonB);
+	    frame.remove(buttonC);
+	    frame.remove(buttonD);
+	    frame.remove(answer_labelA);
+	    frame.remove(answer_labelB);
+	    frame.remove(answer_labelC);
+	    frame.remove(answer_labelD);
+	    frame.remove(seconds_left);
+	    frame.remove(time_label);
 
-    number_right.setText("(" + correct_guesses + "/" + total_questions + ")");
-    percentage.setText(result + "%");
+	    // Adaugă noile componente pentru afișarea rezultatelor
+	    frame.add(number_right);
+	    frame.add(percentage);
+	    frame.add(buttonBack);
+	    
+	    frame.repaint();
 
-    frame.remove(textarea);
-    frame.remove(buttonA);
-    frame.remove(buttonB);
-    frame.remove(buttonC);
-    frame.remove(buttonD);
-    frame.remove(answer_labelA);
-    frame.remove(answer_labelB);
-    frame.remove(answer_labelC);
-    frame.remove(answer_labelD);
-    frame.remove(seconds_left);
-    frame.remove(time_label);
+	    // Solicită numele jucătorului și salvează scorul
+	    String numeJucator = JOptionPane.showInputDialog(frame, "Introduceți numele pentru a salva scorul:");
+	    if (numeJucator != null && !numeJucator.trim().isEmpty()) {
+	        salveazaScor(numeJucator, correct_guesses);
+	    }
 
-    frame.add(number_right);
-    frame.add(percentage);
-    frame.repaint();
-    
-  }
+	    // Afișează top 10 scoruri
+	    afiseazaTopScoruri();
+
+	}
+
+//Clasa ScorJucator
+public static class ScorJucator implements Comparable<ScorJucator> {
+   private String nume;
+   private int scor;
+
+   public ScorJucator(String nume, int scor) {
+       this.nume = nume;
+       this.scor = scor;
+   }
+
+   public String getNume() {
+       return nume;
+   }
+
+   public int getScor() {
+       return scor;
+   }
+
+   @Override
+   public int compareTo(ScorJucator altScor) {
+       return altScor.scor - this.scor; // Sortare descrescătoare
+   }
+}
+
+//Metoda pentru salvarea scorurilor
+public void salveazaScor(String numeJucator, int scor) {
+   try (BufferedWriter writer = new BufferedWriter(new FileWriter ("leaderboard.txt", true))) {
+       writer.write(numeJucator + " - " + scor);
+       writer.newLine();
+   } catch (IOException e) {
+       e.printStackTrace();
+   }
+}
+
+//Metoda pentru citirea clasamentului
+public List<ScorJucator> citesteClasament() {
+   List<ScorJucator> scoruri = new ArrayList<>();
+   try (BufferedReader reader = new BufferedReader(new FileReader("leaderboard.txt"))) {
+       String linie;
+       while ((linie = reader.readLine()) != null) {
+           String[] parts = linie.split(" - ");
+           scoruri.add(new ScorJucator(parts[0], Integer.parseInt(parts[1])));
+       }
+   } catch (IOException e) {
+       e.printStackTrace();
+   }
+   Collections.sort(scoruri);
+   return scoruri;
+}
+
+//Metoda pentru afișarea top scorurilor
+public void afiseazaTopScoruri() {
+    List<ScorJucator> topScoruri = citesteClasament();
+    JFrame leaderboardFrame = new JFrame("Leaderboard");
+    leaderboardFrame.setSize(400, 600);
+    leaderboardFrame.getContentPane().setBackground(new Color(50, 50, 50));
+    leaderboardFrame.setLayout(new BorderLayout());
+    leaderboardFrame.setLocationRelativeTo(frame); // Centrarea față de frame-ul principal
+
+    JTextArea scoruriText = new JTextArea();
+    scoruriText.setEditable(false);
+    scoruriText.setBackground(new Color(25, 25, 25));
+    scoruriText.setForeground(new Color(25, 255, 0));
+    scoruriText.setFont(new Font("MV Boli", Font.BOLD, 20));
+    scoruriText.setMargin(new Insets(10, 10, 10, 10)); // Adaugă margini pentru text
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Top 10 Scoruri:\n\n");
+    for (int i = 0; i < Math.min(topScoruri.size(), 10); i++) {
+        ScorJucator scor = topScoruri.get(i);
+        sb.append(i + 1).append(". ").append(scor.getNume()).append(" - ").append(scor.getScor()).append("\n");
+    }
+
+    scoruriText.setText(sb.toString());
+
+    JScrollPane scrollPane = new JScrollPane(scoruriText);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder()); // Înlătură border-ul implicit
+    leaderboardFrame.add(scrollPane, BorderLayout.CENTER);
+
+    leaderboardFrame.setVisible(true);
+}
+
 }
