@@ -1,4 +1,5 @@
 
+
 public class Main {
 
 	public static void main(String[] args) {
@@ -6,7 +7,6 @@ public class Main {
         Quiz quiz = new Quiz();
 	}
 }
-
 
 
 
