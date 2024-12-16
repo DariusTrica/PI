@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 
 
@@ -17,40 +21,18 @@ import java.util.ArrayList;
  * @author Darius
  */
 public class Quiz implements ActionListener {
+	private Connection conn;
 
-  String[] questions = {
-    "Care este cea mai mare planeta din sistemul solar?",
-    "Cate continente exista pe Pamant?",
-    "In ce an s-a sfarsit Al Doilea Razboi Mondial?",
-    "In ce anotimp incepe sa ninga?",
-    "Ce planeta este cunoscuta ca \"Planeta Rosie\"?",
-    "Care este cel mai lung râu din lume?",
-    "Care este capitala Frantei?",
-    "Câte elemente sunt în tabelul periodic?",
-    "Care este cel mai mare ocean din lume?",
-    "Care este elementul chimic cu simbolul \"O\"?",
-  };
-  String[][] options = {
-    { "Jupiter", "Pamant", "Venus", "Marte" },
-    { "5", "7", "6", "8" },
-    { "1943", "1947", "1945", "1950" },
-    { "Primavara", "Vara", "Iarna", "Toamna" },
-    { "Jupiter", "Saturn", "Venus", "Marte" },
-    { "Nil", "Amazon", "Yangtze", "Mississippi" },
-    { "Berlin", "Londra", "Madrid", "Paris" },
-    { "105", "118", "112", "300" },
-    { "Oceanul Pacific", "Oceanul Indian", "Oceanul Atlantic", "Oceanul Arctic" },
-    { "Aur", "Osmiu", "Oxigen", "Olmiu" },
-  };
-  char[] answers = { 'A', 'B', 'C', 'C','D','B','D','B','A','C' };
+  
 
   char guess;
   char answer;
   int index;
   int correct_guesses = 0;
-  int total_questions = questions.length;
+  int total_questions;
   int result;
   int seconds = 15;
+  List<Question> questionsDB = new ArrayList<Question>();
 
 
   JButton buttonStart = new JButton();
@@ -86,10 +68,29 @@ public class Quiz implements ActionListener {
       }
     }
   );
+
+  private void loadQuestionsFromDB() {
+      String sql = "SELECT question, option_a, option_b, option_c, option_d, correct_answer FROM questions";
+      try (PreparedStatement pstmt = conn.prepareStatement(sql);
+           ResultSet rs = pstmt.executeQuery()) {
+          while (rs.next()) {
+        	  total_questions ++;
+              String questionText = rs.getString("question");
+              char correctAnswer = rs.getString("correct_answer").charAt(0);
+              questionsDB.add(new Question(questionText, rs.getString("option_a"), rs.getString("option_b"), rs.getString("option_c"), rs.getString("option_d"), correctAnswer));
+          }
+      } catch (SQLException e) {
+          e.printStackTrace();
+      }
+  }
+  
 /**
  * Setarea de frame uri
  */
-  public Quiz() {
+  public Quiz(Connection conn) {
+	  
+	  this.conn = conn;
+	  loadQuestionsFromDB();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setSize(650,650);
     frame.getContentPane().setBackground(new Color(50, 50, 50));
@@ -117,10 +118,16 @@ public class Quiz implements ActionListener {
     frame.add(buttonStart);
     frame.add(buttonQuit);
     frame.setVisible(true);
+    
   }
+  public List<Question> getQuestions() {
+	    return this.questionsDB;
+	}
+
 /**
  * Setarea tuturor frameurilor
  */
+  
   
   public void playGame() {
 
@@ -248,11 +255,11 @@ public class Quiz implements ActionListener {
       results();
     } else {
       textfield.setText("Intrebarea " + (index + 1));
-      textarea.setText(questions[index]);
-      answer_labelA.setText(options[index][0]);
-      answer_labelB.setText(options[index][1]);
-      answer_labelC.setText(options[index][2]);
-      answer_labelD.setText(options[index][3]);
+      textarea.setText(questionsDB.get(index).getQuestion());
+      answer_labelA.setText(questionsDB.get(index).getVarA());
+      answer_labelB.setText(questionsDB.get(index).getVarB());
+      answer_labelC.setText(questionsDB.get(index).getVarC());
+      answer_labelD.setText(questionsDB.get(index).getVarD());
       timer.start();
     }
   }
@@ -266,7 +273,7 @@ public class Quiz implements ActionListener {
       System.exit(0);
     } else if (e.getSource() == buttonBack) {
         frame.dispose();
-        new Quiz();
+        new Quiz(conn);
     } else {
       buttonA.setEnabled(false);
       buttonB.setEnabled(false);
@@ -274,25 +281,25 @@ public class Quiz implements ActionListener {
       buttonD.setEnabled(false);
       if (e.getSource() == buttonA) {
         answer = 'A';
-        if (answer == answers[index]) {
+        if (answer == questionsDB.get(index).getCorrect()) {
           correct_guesses++;
         }
       }
       if (e.getSource() == buttonB) {
         answer = 'B';
-        if (answer == answers[index]) {
+        if (answer == questionsDB.get(index).getCorrect()) {
           correct_guesses++;
         }
       }
       if (e.getSource() == buttonC) {
         answer = 'C';
-        if (answer == answers[index]) {
+        if (answer == questionsDB.get(index).getCorrect()) {
           correct_guesses++;
         }
       }
       if (e.getSource() == buttonD) {
         answer = 'D';
-        if (answer == answers[index]) {
+        if (answer == questionsDB.get(index).getCorrect()) {
           correct_guesses++;
         }
       }
@@ -310,16 +317,16 @@ public class Quiz implements ActionListener {
     buttonC.setEnabled(false);
     buttonD.setEnabled(false);
 
-    if (answers[index] != 'A') answer_labelA.setForeground(
+    if (questionsDB.get(index).getCorrect() != 'A') answer_labelA.setForeground(
       new Color(255, 0, 0)
     );
-    if (answers[index] != 'B') answer_labelB.setForeground(
+    if (questionsDB.get(index).getCorrect() != 'B') answer_labelB.setForeground(
       new Color(255, 0, 0)
     );
-    if (answers[index] != 'C') answer_labelC.setForeground(
+    if (questionsDB.get(index).getCorrect() != 'C') answer_labelC.setForeground(
       new Color(255, 0, 0)
     );
-    if (answers[index] != 'D') answer_labelD.setForeground(
+    if (questionsDB.get(index).getCorrect() != 'D') answer_labelD.setForeground(
       new Color(255, 0, 0)
     );
 
