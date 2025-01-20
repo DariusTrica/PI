@@ -14,17 +14,22 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 
 /**
+ * Clasa principala pentru gestionarea jocului Quiz.
+ * Aceasta clasă implementeaza logica principala a jocului, inclusiv gestionarea întrebarilor, cronometru, scoruri și afisarea clasamentului.
+ *
  * @author Darius
  */
 public class Quiz implements ActionListener {
+	// Conexiunea la baza de date
 	private Connection conn;
 
   
-
+	// Variabile de joc
   char guess;
   char answer;
   int index;
@@ -34,7 +39,7 @@ public class Quiz implements ActionListener {
   int seconds = 15;
   List<Question> questionsDB = new ArrayList<Question>();
 
-
+//Componente UI
   JButton buttonStart = new JButton();
   JButton buttonQuit = new JButton();
   JButton buttonBack = new JButton("Back to Menu");
@@ -58,6 +63,11 @@ public class Quiz implements ActionListener {
   Timer timer = new Timer(
     1000,
     new ActionListener() {
+    	/**
+    	 * Gestioneaza evenimentul de actiune și actualizeaza cronometrajul.
+    	 *
+    	 * @param e Evenimentul de actiune care a declansat aceasta metoda.
+    	 */
       @Override
       public void actionPerformed(ActionEvent e) {
         seconds--;
@@ -68,7 +78,10 @@ public class Quiz implements ActionListener {
       }
     }
   );
-
+  /**
+   * Incarca întrebarile din baza de date.
+   * Fiecare întrebare este stocata într-o lista de obiecte Question.
+   */
   private void loadQuestionsFromDB() {
       String sql = "SELECT question, option_a, option_b, option_c, option_d, correct_answer FROM questions";
       try (PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -84,51 +97,63 @@ public class Quiz implements ActionListener {
       }
   }
   
-/**
- * Setarea de frame uri
- */
+  /**
+   * Constructorul principal al clasei Quiz.
+   * Inițializează conexiunea la baza de date si incarca întrebarile.
+   *
+   * @param conn conexiunea la baza de date
+   */
   public Quiz(Connection conn) {
 	  
 	  this.conn = conn;
 	  loadQuestionsFromDB();
+	// Setări pentru frame-ul principal
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setSize(650,650);
     frame.getContentPane().setBackground(new Color(50, 50, 50));
     frame.setLayout(null);
     frame.setResizable(false);
 
-   
+ // Configurare buton Start
     buttonStart.setBounds(220, 150, 200, 100);
     buttonStart.setFont(new Font("MV Boli", Font.BOLD, 35));
     buttonStart.setFocusable(false);
     buttonStart.addActionListener(this);
     buttonStart.setText("Play");
 
+    // Configurare buton Quit
     buttonQuit.setBounds(220, 350, 200, 100);
     buttonQuit.setFont(new Font("MV Boli", Font.BOLD, 35));
     buttonQuit.setFocusable(false);
     buttonQuit.addActionListener(this);
     buttonQuit.setText("Quit");
     
+ // Configurare buton Înapoi la Meniu
     buttonBack.setBounds(220, 450, 200, 100);
     buttonBack.setFont(new Font("MV Boli", Font.BOLD, 20));
     buttonBack.setFocusable(false);
     buttonBack.addActionListener(this);
 
+    // Adăugare componente la frame-ul principal
     frame.add(buttonStart);
     frame.add(buttonQuit);
     frame.setVisible(true);
     
   }
+  /**
+   * Obtine lista de intrebari din baza de date interna.
+   *
+   * @return O listă de obiecte {@link Question} care reprezinta întrebarile disponibile
+   *         în baza de date.
+   */
   public List<Question> getQuestions() {
 	    return this.questionsDB;
 	}
 
-/**
- * Setarea tuturor frameurilor
- */
-  
-  
+
+  /**
+   * Metoda pentru pornirea jocului.
+   */
   public void playGame() {
 
      // remove start and quit buttons
@@ -329,32 +354,33 @@ public class Quiz implements ActionListener {
     if (questionsDB.get(index).getCorrect() != 'D') answer_labelD.setForeground(
       new Color(255, 0, 0)
     );
-
     Timer pause = new Timer(
-      2000,
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          answer_labelA.setForeground(new Color(25, 255, 0));
-          answer_labelB.setForeground(new Color(25, 255, 0));
-          answer_labelC.setForeground(new Color(25, 255, 0));
-          answer_labelD.setForeground(new Color(25, 255, 0));
+    	      2000,
+    	      new ActionListener() {
+    	        @Override
+    	        public void actionPerformed(ActionEvent e) {
+    	          answer_labelA.setForeground(new Color(25, 255, 0));
+    	          answer_labelB.setForeground(new Color(25, 255, 0));
+    	          answer_labelC.setForeground(new Color(25, 255, 0));
+    	          answer_labelD.setForeground(new Color(25, 255, 0));
 
-          answer = ' ';
-          seconds = 15;
-          seconds_left.setText(String.valueOf(seconds));
-          buttonA.setEnabled(true);
-          buttonB.setEnabled(true);
-          buttonC.setEnabled(true);
-          buttonD.setEnabled(true);
-          index++;
-          nextQuestion();
-        }
-      }
-    );
-    pause.setRepeats(false);
-    pause.start();
-  }
+    	          answer = ' ';
+    	          seconds = 15;
+    	          seconds_left.setText(String.valueOf(seconds));
+    	          buttonA.setEnabled(true);
+    	          buttonB.setEnabled(true);
+    	          buttonC.setEnabled(true);
+    	          buttonD.setEnabled(true);
+    	          index++;
+    	          nextQuestion();
+    	        }
+    	      }
+    	    );
+    	    pause.setRepeats(false);
+    	    pause.start();
+    	    
+    	  }
+    
 /**
  * Afisarea rezultatelor
  */
@@ -365,7 +391,7 @@ public class Quiz implements ActionListener {
 	    number_right.setText("(" + correct_guesses + "/" + total_questions + ")");
 	    percentage.setText(result + "%");
 
-	    // Elimină componentele anterioare din frame
+	    // Elimina componentele anterioare din frame
 	    frame.remove(textarea);
 	    frame.remove(buttonA);
 	    frame.remove(buttonB);
@@ -378,7 +404,7 @@ public class Quiz implements ActionListener {
 	    frame.remove(seconds_left);
 	    frame.remove(time_label);
 
-	    // Adaugă noile componente pentru afișarea rezultatelor
+	    // Adauga noile componente pentru afisarea rezultatelor
 	    frame.add(number_right);
 	    frame.add(percentage);
 	    frame.add(buttonBack);
@@ -395,21 +421,40 @@ public class Quiz implements ActionListener {
 	    afiseazaTopScoruri();
 
 	}
-
-//Clasa ScorJucator
+  /**
+   * Afisaja scorul jucatorului
+   */
 public static class ScorJucator implements Comparable<ScorJucator> {
    private String nume;
    private int scor;
-
+   /**
+    * Acest constructor initializează obiectul `ScorJucator` cu un nume și un scor 
+    * pe care le primește ca parametri.
+    *
+    * @param nume Numele jucătorului.
+    * @param scor Scorul jucătorului.
+    */
    public ScorJucator(String nume, int scor) {
        this.nume = nume;
        this.scor = scor;
    }
-
+   /**
+    * Obtine numele jucatorului.
+    *
+    * Aceasta metoda returneaza numele jucatorului stocat în obiectul `ScorJucator`.
+    *
+    * @return Numele jucatorului.
+    */
    public String getNume() {
        return nume;
    }
-
+   /**
+    * Obtine scorul jucatorului.
+    *
+    * Aceasta metoda returneaza scorul jucatorului stocat în obiectul `ScorJucator`.
+    *
+    * @return Scorul jucatorului.
+    */
    public int getScor() {
        return scor;
    }
@@ -419,8 +464,11 @@ public static class ScorJucator implements Comparable<ScorJucator> {
        return altScor.scor - this.scor; // Sortare descrescătoare
    }
 }
-
-//Metoda pentru salvarea scorurilor
+/** 
+ * Metoda pentru salvarea scorurilor 
+ * @param numeJucator numele jucătorului care a obținut scorul.
+ * @param scor scorul obținut de jucător.
+ */
 public void salveazaScor(String numeJucator, int scor) {
    try (BufferedWriter writer = new BufferedWriter(new FileWriter ("leaderboard.txt", true))) {
        writer.write(numeJucator + " - " + scor);
@@ -429,8 +477,13 @@ public void salveazaScor(String numeJucator, int scor) {
        e.printStackTrace();
    }
 }
-
-//Metoda pentru citirea clasamentului
+/** 
+ * Metoda pentru citirea clasamentului
+ * @return o listă de obiecte {@code ScorJucator}, care reprezinta numele 
+ * jucatorilor și scorurile lor, sortata descrescator dupa scor. 
+ * Daca fisierul nu exista sau nu poate fi citit, lista returnata 
+ * va fi goala.
+ */
 public List<ScorJucator> citesteClasament() {
    List<ScorJucator> scoruri = new ArrayList<>();
    try (BufferedReader reader = new BufferedReader(new FileReader("leaderboard.txt"))) {
@@ -445,8 +498,9 @@ public List<ScorJucator> citesteClasament() {
    Collections.sort(scoruri);
    return scoruri;
 }
-
-//Metoda pentru afișarea top scorurilor
+/** 
+ * Metoda pentru afișarea top scorurilor 
+ */
 public void afiseazaTopScoruri() {
     List<ScorJucator> topScoruri = citesteClasament();
     JFrame leaderboardFrame = new JFrame("Leaderboard");
